@@ -1,0 +1,9 @@
+main topic - to be changed, currently "ovt-dev/"
+
+subtopics:
+status - online/offline
+temperature
+humidity
+pressure
+illuminance
+iaq (indoor air quality)
