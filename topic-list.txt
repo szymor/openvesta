@@ -5,5 +5,4 @@ status - online/offline
 temperature
 humidity
 pressure
-illuminance
 iaq (indoor air quality)
