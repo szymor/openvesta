@@ -1,5 +1,8 @@
 HOSTNAME = "openvesta"
 BROKER = "test.mosquitto.org"
+BROKER_PORT = 1883
+MQTTUSER = ""
+MQTTPASS = ""
 CLIENTID = "openvesta-station-dev"
 TOPLEVELTOPIC = "ovt-dev/"
 
@@ -20,21 +23,34 @@ function get_measures()
   else
     humi = humi / 1000
   end
-  iaq = 123
+  if iaq == nil then
+    iaq = "err"
+  else
+    iaq = 1234
+  end
 end
 
 function var_replace(s)
   if s == "%temp" then
     return temp
-  end
-  if s == "%humi" then
+  elseif s == "%humi" then
     return humi
-  end
-  if s == "%pres" then
+  elseif s == "%pres" then
     return pres
-  end
-  if s == "%iaq" then
+  elseif s == "%iaq" then
     return iaq
+  elseif s == "%address" then
+    return BROKER
+  elseif s == "%port" then
+    return BROKER_PORT
+  elseif s == "%mqttuser" then
+    return MQTTUSER
+  elseif s == "%mqttpass" then
+    return MQTTPASS
+  elseif s == "%clientid" then
+    return CLIENTID
+  elseif s == "%toplevel" then
+    return TOPLEVELTOPIC
   end
 end
 
@@ -67,13 +83,50 @@ function timer_on_tick(timer)
 end
 
 function http_on_receive(sck, data)
+  -- send not more than ~2500 bytes at once or crash will happen
   print("data:", data)
-  if string.find(data, "GET / ") then
-  -- max ~2500 bytes
-    html = "test %temp %humi %pres %iaq"
+  local getfound = string.find(data, "GET / ")
+  local postfound = string.find(data, "POST / ")
+  
+  if postfound then
+    for pair in string.gmatch(data, "%w+=[0-9a-zA-Z.%-%%]*") do
+      local iter = string.gmatch(pair, "[0-9a-zA-Z.%-%%]*")
+      local name = iter()
+      iter() -- empty call to iter(), in Lua 5.3.5 it is not needed
+      local val = iter()
+      val = string.gsub(val, "%%2F", "/")
+
+      if name == "address" then
+        BROKER = val
+      elseif name == "port" then
+        BROKER_PORT = val
+      elseif name == "mqttuser" then
+        MQTTUSER = val
+      elseif name == "mqttpass" then
+        MQTTPASS = val
+      elseif name == "clientid" then
+        CLIENTID = val
+      elseif name == "toplevel" then
+        TOPLEVELTOPIC = val
+      elseif name == "mode" then
+        reconnect = true
+        wifimode = val
+      elseif name == "ssid" then
+        station_cfg.ssid = val
+      elseif name == "wifipass" then
+        station_cfg.pwd = val
+      end
+    end
+  end
+
+  if getfound or postfound then
     get_measures()
     parsed_html = string.gsub(html, "%%%w+", var_replace)
     sck:send(parsed_html)
+  end
+
+  if not getfound and not postfound then
+    sck:close()
   end
 end
 
@@ -101,11 +154,16 @@ t = tmr.create()
 t:register(10000, tmr.ALARM_AUTO, timer_on_tick)
 t:start()
 
-sv = net.createServer(net.TCP, 30)
+sv = net.createServer(net.TCP, 5)
 
 if sv then
   sv:listen(80, function(conn)
     conn:on("receive", http_on_receive)
     conn:on("sent", http_on_sent)
   end)
+end
+
+if file.open("confpanel.htm", "r") then
+  html = file.read(2048)
+  file.close()
 end

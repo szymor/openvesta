@@ -18,38 +18,105 @@ font-weight: bold;
 ul {
 list-style-type: none;
 }
+fieldset table {
+margin-left: 1em;
+width: 20em;
+}
+#maintable {
+width: 100%;
+}
 </style>
 </head>
 <body>
 <h2>OpenVesta configuration panel</h2>
+<table id="maintable">
+<tr>
+<td colspan="2">
 <fieldset>
 <legend>Sensor information</legend>
-<ul>
-<li>Temperature %temp</li>
-<li>Humidity %humi</li>
-<li>Pressure %pres</li>
-<li>Indoor Air Quality %iaq</li>
-</ul>
+<table>
+<tr>
+<td>Temperature</td>
+<td>%temp</td>
+</tr>
+<tr>
+<td>Humidity</td>
+<td>%humi</td>
+</tr>
+<tr>
+<td>Pressure</td>
+<td>%pres</td>
+</tr>
+<tr>
+<td>Indoor Air Quality</td>
+<td>%iaq</td>
+</tr>
+</table>
 </fieldset>
+</td>
+</tr>
+<tr>
+<td>
 <fieldset>
 <legend>Wi-fi settings</legend>
-<ul>
-<li>Mode (STA/AP)</li>
-<li>SSID</li>
-<li>Password</li>
-</ul>
+<form action="/" method="post">
+<table>
+<tr>
+<td>Mode</td>
+<td>
+<input type="radio" name="mode" value="STA" checked> STA<br>
+<input type="radio" name="mode" value="AP"> AP
+</td>
+</tr>
+<tr>
+<td>SSID</td>
+<td><input type="text" name="ssid" /></td>
+</tr>
+<tr>
+<td>Password</td>
+<td><input type="text" name="wifipass" /></td>
+</tr>
+<tr><td colspan="2"><input type="submit" value="Apply"></td></tr>
+</table>
+</form>
 </fieldset>
+</td>
+<td>
 <fieldset>
 <legend>MQTT configuration</legend>
-<ul>
-<li>Broker server address</li>
-<li>Broker server port</li>
-<li>Username</li>
-<li>Password</li>
-<li>Client ID</li>
-<li>Top-level topic</li>
-</ul>
+<form action="/" method="post">
+<table>
+<tr>
+<td>Broker address</td>
+<td><input type="text" name="address" value="%address" /></td>
+</tr>
+<tr>
+<td>Broker port</td>
+<td><input type="text" name="port" value="%port" /></td>
+</tr>
+<tr>
+<td>Username</td>
+<td><input type="text" name="mqttuser" value="%mqttuser" /></td>
+</tr>
+<tr>
+<td>Password</td>
+<td><input type="text" name="mqttpass" value="%mqttpass" /></td>
+</tr>
+<tr>
+<td>Client ID</td>
+<td><input type="text" name="clientid" value="%clientid" /></td>
+</tr>
+<tr>
+<td>Top-level topic</td>
+<td><input type="text" name="toplevel" value="%toplevel" /></td>
+</tr>
+<tr><td colspan="2"><input type="submit" value="Apply"></td></tr>
+</table>
+</form>
 </fieldset>
+</td>
+<tr>
+</table>
 <footer>by f33</footer>
 </body>
 </html>
