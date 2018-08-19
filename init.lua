@@ -6,6 +6,35 @@ MQTTPASS = ""
 CLIENTID = "openvesta-station-dev"
 TOPLEVELTOPIC = "ovt-dev/"
 
+function reboot()
+  if mqtt_ready == true then
+    m:close()
+  end
+
+  -- delay needed for the web interface
+  tmr.create():alarm(500, tmr.ALARM_SINGLE, function ()
+    if sv then
+      sv:close()
+    end
+  end)
+  
+  tmr.create():alarm(1000, tmr.ALARM_SINGLE, function ()
+    if wifimode == "STA" then
+      station_cfg.save = true
+      wifi.setmode(wifi.STATION, false) 
+      wifi.setphymode(wifi.PHYMODE_N)
+      wifi.sta.config(station_cfg)
+      wifi.sta.autoconnect(0)
+    elseif wifimode == "AP" then
+      -- ssid and pwd does not matter in AP mode
+      wifi.sta.clearconfig()
+    end
+    wifi.sta.disconnect()
+  end)
+  
+  tmr.create():alarm(1500, tmr.ALARM_SINGLE, node.restart)
+end
+
 function get_measures()
   temp, pres, humi = bme280.read()
   if temp == nil then
@@ -74,7 +103,6 @@ end
 
 function timer_on_tick(timer)
   if mqtt_ready then
-    get_measures()
     m:publish(TOPLEVELTOPIC .. "temperature", temp, 0, 0)
     m:publish(TOPLEVELTOPIC .. "humidity", humi, 0, 0)
     m:publish(TOPLEVELTOPIC .. "pressure", pres, 0, 0)
@@ -83,8 +111,7 @@ function timer_on_tick(timer)
 end
 
 function http_on_receive(sck, data)
-  -- send not more than ~2500 bytes at once or crash will happen
-  print("data:", data)
+  local restart_request = false
   local getfound = string.find(data, "GET / ")
   local postfound = string.find(data, "POST / ")
   
@@ -109,7 +136,7 @@ function http_on_receive(sck, data)
       elseif name == "toplevel" then
         TOPLEVELTOPIC = val
       elseif name == "mode" then
-        reconnect = true
+        restart_request = true
         wifimode = val
       elseif name == "ssid" then
         station_cfg.ssid = val
@@ -122,11 +149,16 @@ function http_on_receive(sck, data)
   if getfound or postfound then
     get_measures()
     parsed_html = string.gsub(html, "%%%w+", var_replace)
+    -- send not more than ~2500 bytes at once or crash will happen
     sck:send(parsed_html)
   end
 
   if not getfound and not postfound then
     sck:close()
+  end
+
+  if restart_request == true then
+    reboot()
   end
 end
 
@@ -139,29 +171,37 @@ i2c.setup(0, sda, scl, i2c.SLOW)
 bme280.setup()
 get_measures()
 
-station_cfg = {}
-station_cfg.ssid = "AndroidAP"
-station_cfg.pwd = "zcse8237"
-station_cfg.save = false
-
-wifi.setmode(wifi.STATION, false) 
-wifi.setphymode(wifi.PHYMODE_N)
-wifi.sta.config(station_cfg)
-wifi.sta.sethostname(HOSTNAME)
-wifi.sta.connect(wifi_on_connect)
-
-t = tmr.create()
-t:register(10000, tmr.ALARM_AUTO, timer_on_tick)
-t:start()
+station_cfg = wifi.sta.getdefaultconfig(true)
+if station_cfg.ssid == "" then
+  cfg = {}
+  cfg.ssid = "OpenVesta"
+  cfg.pwd = nil
+  wifi.setmode(wifi.SOFTAP, false) 
+  wifi.setphymode(wifi.PHYMODE_G) -- 802.11n not supported in AP mode
+  wifi.ap.config(cfg)
+else
+--station_cfg = {}
+--station_cfg.ssid = "AndroidAP"
+--station_cfg.pwd = "zcse8237"
+--station_cfg.save = false
+  wifi.setmode(wifi.STATION, false) 
+  wifi.setphymode(wifi.PHYMODE_N)
+  wifi.sta.config(station_cfg)
+  wifi.sta.sethostname(HOSTNAME)
+  wifi.sta.connect(wifi_on_connect)
+end
 
 sv = net.createServer(net.TCP, 5)
-
 if sv then
   sv:listen(80, function(conn)
     conn:on("receive", http_on_receive)
     conn:on("sent", http_on_sent)
   end)
 end
+
+t = tmr.create()
+t:register(10000, tmr.ALARM_AUTO, timer_on_tick)
+t:start()
 
 if file.open("confpanel.htm", "r") then
   html = file.read(2048)
