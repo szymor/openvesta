@@ -1,10 +1,39 @@
+-- OpenVesta -- indoor wi-fi sensor
+
 HOSTNAME = "openvesta"
-BROKER = "test.mosquitto.org"
-BROKER_PORT = 1883
-MQTTUSER = ""
-MQTTPASS = ""
-CLIENTID = "openvesta-station-dev"
-TOPLEVELTOPIC = "ovt-dev/"
+
+function load_mqtt_configuration()
+  if file.open("mqtt.conf", "r") then
+    -- reads lines without \n
+    BROKER = string.sub(file.readline(), 0, -2)
+    BROKER_PORT = string.sub(file.readline(), 0, -2)
+    MQTTUSER = string.sub(file.readline(), 0, -2)
+    MQTTPASS = string.sub(file.readline(), 0, -2)
+    CLIENTID = string.sub(file.readline(), 0, -2)
+    TOPLEVELTOPIC = string.sub(file.readline(), 0, -2)
+    file.close()
+  else
+    -- default settings
+    BROKER = "test.mosquitto.org"
+    BROKER_PORT = 1883
+    MQTTUSER = ""
+    MQTTPASS = ""
+    CLIENTID = "openvesta-station-dev"
+    TOPLEVELTOPIC = "ovt-dev/"
+  end
+end
+
+function save_mqtt_configuration()
+  if file.open("mqtt.conf", "w") then
+    file.writeline(BROKER)
+    file.writeline(BROKER_PORT)
+    file.writeline(MQTTUSER)
+    file.writeline(MQTTPASS)
+    file.writeline(CLIENTID)
+    file.writeline(TOPLEVELTOPIC)
+    file.close()
+  end
+end
 
 function reboot()
   if mqtt_ready == true then
@@ -111,6 +140,7 @@ function timer_on_tick(timer)
 end
 
 function http_on_receive(sck, data)
+  local new_mqtt_conf = false
   local restart_request = false
   local getfound = string.find(data, "GET / ")
   local postfound = string.find(data, "POST / ")
@@ -125,6 +155,7 @@ function http_on_receive(sck, data)
 
       if name == "address" then
         BROKER = val
+        new_mqtt_conf = true
       elseif name == "port" then
         BROKER_PORT = val
       elseif name == "mqttuser" then
@@ -157,6 +188,11 @@ function http_on_receive(sck, data)
     sck:close()
   end
 
+  if new_mqtt_conf == true then
+    save_mqtt_configuration()
+    restart_request = true
+  end
+
   if restart_request == true then
     reboot()
   end
@@ -165,6 +201,18 @@ end
 function http_on_sent(sck)
   sck:close()
 end
+
+gpio.mode(0, gpio.INPUT, gpio.PULLUP)
+gpio.write(0, gpio.HIGH)
+tmr.delay(100)
+if gpio.read(0) == 0 then
+  -- reset wi-fi and mqtt settings
+  file.remove("mqtt.conf")
+  wifimode = "AP"
+  reboot()
+end
+
+load_mqtt_configuration()
 
 sda, scl = 2, 1
 i2c.setup(0, sda, scl, i2c.SLOW)
