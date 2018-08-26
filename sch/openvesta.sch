@@ -604,58 +604,6 @@ Wire Wire Line
 	2600 1750 2500 1750
 Wire Wire Line
 	2600 1850 2500 1850
-$Comp
-L Device:R R?
-U 1 1 5B7FAEC3
-P 1200 1100
-F 0 "R?" H 1270 1146 50  0000 L CNN
-F 1 "10k" H 1270 1055 50  0000 L CNN
-F 2 "" V 1130 1100 50  0001 C CNN
-F 3 "~" H 1200 1100 50  0001 C CNN
-	1    1200 1100
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:R R?
-U 1 1 5B7FAF30
-P 800 1400
-F 0 "R?" H 870 1446 50  0000 L CNN
-F 1 "10k" H 870 1355 50  0000 L CNN
-F 2 "" V 730 1400 50  0001 C CNN
-F 3 "~" H 800 1400 50  0001 C CNN
-	1    800  1400
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1300 1350 1200 1350
-Wire Wire Line
-	1200 1350 1200 1250
-Wire Wire Line
-	1200 950  1200 850 
-Wire Wire Line
-	800  1250 800  1150
-$Comp
-L power:+3V3 #PWR?
-U 1 1 5B803298
-P 1200 850
-F 0 "#PWR?" H 1200 700 50  0001 C CNN
-F 1 "+3V3" H 1215 1023 50  0000 C CNN
-F 2 "" H 1200 850 50  0001 C CNN
-F 3 "" H 1200 850 50  0001 C CNN
-	1    1200 850 
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:+3V3 #PWR?
-U 1 1 5B8032F0
-P 800 1150
-F 0 "#PWR?" H 800 1000 50  0001 C CNN
-F 1 "+3V3" H 815 1323 50  0000 C CNN
-F 2 "" H 800 1150 50  0001 C CNN
-F 3 "" H 800 1150 50  0001 C CNN
-	1    800  1150
-	1    0    0    -1  
-$EndComp
 NoConn ~ 1300 1950
 NoConn ~ 1300 2050
 NoConn ~ 1300 2150
@@ -692,11 +640,6 @@ F 3 "~" H 7300 2150 50  0001 C CNN
 $EndComp
 Text Label 1150 1350 2    50   ~ 0
 RST
-Wire Wire Line
-	1150 1350 1200 1350
-Connection ~ 1200 1350
-Wire Wire Line
-	800  1550 1300 1550
 Text Label 7400 1350 3    50   ~ 0
 RTS
 Text Label 7400 750  1    50   ~ 0
@@ -759,4 +702,7 @@ Text Label 3350 5750 0    50   ~ 0
 RTS
 Text Label 3350 5950 0    50   ~ 0
 DTR
+Wire Wire Line
+	1150 1350 1300 1350
+NoConn ~ 1300 1550
 $EndSCHEMATC

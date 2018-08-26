@@ -49,16 +49,16 @@ function reboot()
   
   tmr.create():alarm(1000, tmr.ALARM_SINGLE, function ()
     if wifimode == "STA" then
+      station_cfg.auto = true
       station_cfg.save = true
-      wifi.setmode(wifi.STATION, false) 
+      wifi.setmode(wifi.STATION, true) 
       wifi.setphymode(wifi.PHYMODE_N)
       wifi.sta.config(station_cfg)
-      wifi.sta.autoconnect(0)
     elseif wifimode == "AP" then
       -- ssid and pwd does not matter in AP mode
       wifi.sta.clearconfig()
+      wifi.sta.disconnect()
     end
-    wifi.sta.disconnect()
   end)
   
   tmr.create():alarm(1500, tmr.ALARM_SINGLE, node.restart)
@@ -232,9 +232,10 @@ else
 --station_cfg.ssid = "AndroidAP"
 --station_cfg.pwd = "zcse8237"
 --station_cfg.save = false
-  wifi.setmode(wifi.STATION, false) 
-  wifi.setphymode(wifi.PHYMODE_N)
-  wifi.sta.config(station_cfg)
+--  station_cfg.auto = false
+--  wifi.setmode(wifi.STATION, false) 
+--  wifi.setphymode(wifi.PHYMODE_N)
+--  wifi.sta.config(station_cfg)
   wifi.sta.sethostname(HOSTNAME)
   wifi.sta.connect(wifi_on_connect)
 end

@@ -751,4 +751,12 @@ Text Label 2600 1350 0    50   ~ 0
 GPIO0
 Wire Wire Line
 	2500 1350 2600 1350
+Wire Wire Line
+	3250 5750 3350 5750
+Wire Wire Line
+	3250 5950 3350 5950
+Text Label 3350 5750 0    50   ~ 0
+RTS
+Text Label 3350 5950 0    50   ~ 0
+DTR
 $EndSCHEMATC
